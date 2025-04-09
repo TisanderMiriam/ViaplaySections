@@ -7,7 +7,8 @@ class PageViewController: UIViewController {
     // MARK: - UI Elements
     private let descriptionLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16)
+        label.font = UIFont.preferredFont(forTextStyle: .body)
+        label.adjustsFontForContentSizeCategory = true
         label.numberOfLines = 0
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -28,7 +29,7 @@ class PageViewController: UIViewController {
     // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor.systemBackground
         setupViews()
         // First try to load from cache.
         if let cachedPage = self.loadCachedPage(for: href) {
@@ -55,7 +56,6 @@ class PageViewController: UIViewController {
         guard let page = self.page else { return }
         DispatchQueue.main.async {
             self.descriptionLabel.text = page.description
-            print("Page description: \(page.description)")
         }
     }
     
@@ -70,7 +70,6 @@ class PageViewController: UIViewController {
         
         URLSession.shared.dataTask(with: url) { data, response, error in
             
-            // On network error, print it (offline case)
             if let error = error {
                 print("Error fetching section page: \(error.localizedDescription)")
                 return
@@ -94,9 +93,7 @@ class PageViewController: UIViewController {
     // MARK: - Offline Caching Helpers
     
     private func cacheFileURL(for url: URL) -> URL {
-        // Use the caches directory if available, or fallback to the temporary directory.
         let cachesDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory
-        // Create a safe file name by percent-encoding the absolute URL string.
         let fileName = url.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) ?? "page_cache"
         return cachesDirectory.appendingPathComponent(fileName)
     }
@@ -109,7 +106,6 @@ class PageViewController: UIViewController {
             let encoder = JSONEncoder()
             let data = try encoder.encode(page)
             try data.write(to: fileURL)
-            print("Page cached at: \(fileURL.path)")
         } catch {
             print("Error caching page: \(error.localizedDescription)")
         }
@@ -125,7 +121,6 @@ class PageViewController: UIViewController {
                 let data = try Data(contentsOf: fileURL)
                 let decoder = JSONDecoder()
                 let cachedPage = try decoder.decode(Page.self, from: data)
-                print("Loaded cached page from: \(fileURL.path)")
                 return cachedPage
             } catch {
                 print("Error loading cached page: \(error.localizedDescription)")

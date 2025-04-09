@@ -4,10 +4,31 @@ class SectionsTabBarController: UITabBarController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupDynamicTypeObserver()
         fetchRootPage()
     }
     
-    /// Fetch the root page from the API and then set up the tabs for each section.
+    private func setupDynamicTypeObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleContentSizeCategoryDidChange),
+            name: UIContentSizeCategory.didChangeNotification,
+            object: nil)
+    }
+    
+    @objc private func handleContentSizeCategoryDidChange(notification: Notification) {
+        let dynamicFont = UIFont.preferredFont(forTextStyle: .footnote)
+        let attributes: [NSAttributedString.Key: Any] = [.font: dynamicFont]
+        
+        if let items = tabBar.items {
+            for item in items {
+                item.setTitleTextAttributes(attributes, for: .normal)
+                item.setTitleTextAttributes(attributes, for: .selected)
+            }
+        }
+    }
+    
+    
     private func fetchRootPage() {
         guard let url = URL(string: "https://content.viaplay.com/ios-se") else {
             print("Invalid root URL")
@@ -75,7 +96,6 @@ class SectionsTabBarController: UITabBarController {
             let encoder = JSONEncoder()
             let data = try encoder.encode(page)
             try data.write(to: fileURL)
-            print("Page cached at: \(fileURL.path)")
         } catch {
             print("Error caching page: \(error.localizedDescription)")
         }
@@ -89,7 +109,6 @@ class SectionsTabBarController: UITabBarController {
                 let data = try Data(contentsOf: fileURL)
                 let decoder = JSONDecoder()
                 let cachedPage = try decoder.decode(Page.self, from: data)
-                print("Loaded cached page from: \(fileURL.path)")
                 return cachedPage
             } catch {
                 print("Error loading cached page: \(error.localizedDescription)")
