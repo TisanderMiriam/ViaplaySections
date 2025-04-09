@@ -7,7 +7,7 @@ class SectionsTabBarController: UITabBarController {
         fetchRootPage()
     }
     
-    /// Fetches the root page from the API, then sets up the tabs based on section links.
+    /// Fetch the root page from the API and then set up the tabs for each section.
     private func fetchRootPage() {
         guard let url = URL(string: "https://content.viaplay.com/ios-se") else {
             print("Invalid root URL")
@@ -23,30 +23,24 @@ class SectionsTabBarController: UITabBarController {
                 print("No data received for root page")
                 return
             }
+            
             let decoder = JSONDecoder()
             do {
                 let rootPage = try decoder.decode(Page.self, from: data)
-                if rootPage.pageType != "root" {
-                    print("Expected pageType 'root', got \(rootPage.pageType)")
-                    return
-                }
-                guard let links = rootPage.links else {
-                    print("No _links found in root page")
-                    return
-                }
-                let sectionsLinks = links.sections
+                let sectionsLinks = rootPage.links.sections
                 
-                // Create a view controller for each section on the main thread.
                 DispatchQueue.main.async {
-                    
-                    // Create a view controller for each section.
                     var viewControllers: [UIViewController] = []
                     for sectionLink in sectionsLinks {
                         let pageVC = PageViewController()
-                        pageVC.href = sectionLink.href
-                        pageVC.navigationItem.title = sectionLink.title
+                        let sectionPage = Page(
+                            title: sectionLink.title,
+                            description: "\(sectionLink.title) description (from initial fetch).",
+                            pageType: "section",
+                            links: PageLinks(sections: [])
+                        )
+                        pageVC.page = sectionPage
                         
-                        // Wrap in a navigation controller (so that the navigation bar is shown and the tab bar remains).
                         let navVC = UINavigationController(rootViewController: pageVC)
                         navVC.tabBarItem.title = sectionLink.title
                         viewControllers.append(navVC)

@@ -2,7 +2,7 @@ import UIKit
 
 class PageViewController: UIViewController {
     var page: Page?
-    var href: String?    //TODO: Maybe remove? Don't need this for this simple test?
+    var href: String?
     
     // MARK: - UI Elements
     private let titleLabel: UILabel = {
@@ -29,14 +29,15 @@ class PageViewController: UIViewController {
        view.backgroundColor = .white
        setupViews()
        
-       if let href = href {
-           fetchSectionPage(from: href)
-       } else {
+       // If a Page has been set (from first fetch) update UI.
+       // Otherwise, if only href is provided, then fetch the section page.
+       if let _ = page {
            updateUI()
+       } else if let href = href {
+           fetchSectionPage(from: href)
        }
     }
     
-
     private func setupViews() {
        view.addSubview(titleLabel)
        view.addSubview(descriptionLabel)
@@ -56,14 +57,19 @@ class PageViewController: UIViewController {
        }
     }
     
-    // MARK: - Data Loading
-//TODO: Remove? not sure I need this.
+    private func updateUI() {
+       DispatchQueue.main.async {
+         self.titleLabel.text = self.page?.title
+         self.descriptionLabel.text = self.page?.description
+       }
+    }
+    
+    // In case you need to fetch a section page from its href
     private func fetchSectionPage(from urlString: String) {
        guard let url = URL(string: urlString) else {
          print("Invalid URL string: \(urlString)")
          return
        }
-       
        URLSession.shared.dataTask(with: url) { data, response, error in
          if let error = error {
            print("Error fetching section page: \(error.localizedDescription)")
@@ -75,22 +81,12 @@ class PageViewController: UIViewController {
          }
          let decoder = JSONDecoder()
          do {
-           let page = try decoder.decode(Page.self, from: data)
-           self.page = page
-           
+           let fetchedPage = try decoder.decode(Page.self, from: data)
+           self.page = fetchedPage
            self.updateUI()
          } catch {
            print("Error decoding section page: \(error.localizedDescription)")
          }
        }.resume()
-    }
-    
-    // Updates the UI elements on the main thread.
-    private func updateUI() {
-       DispatchQueue.main.async {
-         self.titleLabel.text = self.page?.title
-         self.descriptionLabel.text = self.page?.description
-         self.navigationItem.title = self.page?.title
-       }
     }
 }
