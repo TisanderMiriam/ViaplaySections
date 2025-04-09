@@ -14,13 +14,20 @@ struct Page: Codable {
 
 struct PageLinks: Codable {
     let sections: [Link]
+    let selfLink: Link
 
     private enum CodingKeys: String, CodingKey {
         case sections = "viaplay:sections"
+        case selfLink = "self"
     }
 }
 
 struct Link: Codable {
-    let title: String
+    let tabTitle: String?
     let href: String
+    
+    private enum CodingKeys: String, CodingKey {
+        case tabTitle = "title"
+        case href
+    }
 }

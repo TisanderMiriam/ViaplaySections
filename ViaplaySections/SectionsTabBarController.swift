@@ -6,7 +6,6 @@ class SectionsTabBarController: UITabBarController {
         super.viewDidLoad()
         fetchRootPage()
     }
-    
     /// Fetch the root page from the API and then set up the tabs for each section.
     private func fetchRootPage() {
         guard let url = URL(string: "https://content.viaplay.com/ios-se") else {
@@ -32,17 +31,13 @@ class SectionsTabBarController: UITabBarController {
                 DispatchQueue.main.async {
                     var viewControllers: [UIViewController] = []
                     for sectionLink in sectionsLinks {
-                        let pageVC = PageViewController()
-                        let sectionPage = Page(
-                            title: sectionLink.title,
-                            description: "\(sectionLink.title) description (from initial fetch).",
-                            pageType: "section",
-                            links: PageLinks(sections: [])
-                        )
-                        pageVC.page = sectionPage
-                        
+                        // Initialize PageViewController with the section's own href.
+                        let title = sectionLink.tabTitle ?? "Section"
+                        let pageVC = PageViewController(href: sectionLink.href)
+                        pageVC.navigationItem.title = title
                         let navVC = UINavigationController(rootViewController: pageVC)
-                        navVC.tabBarItem.title = sectionLink.title
+                        
+                        navVC.tabBarItem.title = title
                         viewControllers.append(navVC)
                     }
                     
@@ -53,4 +48,5 @@ class SectionsTabBarController: UITabBarController {
             }
         }.resume()
     }
+
 }
